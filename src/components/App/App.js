@@ -1,54 +1,120 @@
 import React, { Component } from 'react';
 import './App.css';
 
+import Text from '../SideText';
+import Site from '../Site';
+import Weather from '../Weather';
+// import GeolocationExample from '../GeoLocation'
+
+
+const API_KEY = '5b6e2ea387d6bc208427c65ed96cd662'
+const ICONS = {
+    "01d": "CLEAR_DAY",
+    "01n": "CLEAR_NIGHT",
+    "02d": "PARTLY_CLOUDY_DAY",
+    "02n": "PARTLY_CLOUDY_NIGHT",
+    "03d": "CLOUDY",
+    "03n": "CLOUDY",
+    "04d": "CLOUDY",
+    "04n": "CLOUDY",
+    "09d": "RAIN",
+    "09n": "RAIN",
+    "10d": "RAIN",
+    "10n": "RAIN",
+    "11d": "SLEET",
+    "11n": "SLEET",
+    "13d": "SNOW",
+    "13n": "SNOW",
+    "50d": "FOG",
+    "50n": "FOG",
+}
+
 class LoadWeather extends Component{
     constructor(props){
         super(props);
         this.state={
-            lokData: null
+            temperature: undefined,
+            city: undefined,
+            country: undefined,
+            humidity: undefined,
+            description: undefined,
+            pressure: undefined,
+            error: undefined,
+            icon: undefined,
+            clouds: undefined
         }
     }
+    loadWeather = (event) => {
+            event.preventDefault();
+            const city = event.target.elements.city.value;
+            const country = event.target.elements.country.value;
+            fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city},${country}&units=metric&appid=${API_KEY}`)
+                .then(response => {
+                        if(response.ok){
+                            console.log(city, country)
+                            return response.json();
 
-    componentDidMount() {
-        fetch('https://api.openweathermap.org/data/2.5/weather?q=London,uk&units=metric&appid=5b6e2ea387d6bc208427c65ed96cd662')
-            .then(response => {
-                    if(response.ok){
-                        console.log(response)
-                        console.log('ok')
-                        return response.json();
-                    } else {
-                        console.log(response)
+                        } else {
+                            console.log(city, country)
+                            console.log(response)
+                        }
                     }
-                }
-            ).then(data =>{
-                this.setState({
-                 lokData: data
-             })
-         } )
-    }
-    render() {
-        const {lokData} = this.state
-        if(!lokData){
-            return <div>Loading ...</div>
+                )
+                .then(data =>{
+                    if(city && country){
+                        this.setState({
+                            city: data.name,
+                            country: data.sys.country,
+                            temperature: data.main.temp,
+                            humidity: data.main.humidity,
+                            pressure: data.main.pressure,
+                            description: data.weather[0].description,
+                            icon: ICONS[data.weather[0].icon],
+                            clouds: data.clouds.all,
+                            error: ''
+                        })
+                    }else {
+                        this.setState({
+                            temperature: undefined,
+                            city: undefined,
+                            country: undefined,
+                            humidity: undefined,
+                            description: undefined,
+                            pressure: undefined,
+                            clouds: undefined,
+                            error: 'Please enter the values.'
+                        })
+                    }
+            })
         }
-        let myDate = new Date(1548174752 *1000);
-        console.log(myDate.toGMTString()+"</br>"+myDate.toLocaleString());
+    render() {
+        const {city, country, temperature, humidity, description, icon, clouds, pressure, error} = this.state
+        // let time = new Date({lokData.dt} *1000);
+        // time.toGMTString()+"</br>"+time.toLocaleString()
         return (
             <div>
-            <header className='appHeader'>
-                <nav className='container'>
-
-                    WEATHER simple
-                </nav>
-            </header>
-            <div className='container'>
-                <h1>Weather for {lokData.name}</h1>
-                <h2>Temperatura: {lokData.main.temp} <sup>o</sup>C</h2>
-                <h2>{lokData.weather.map(el => {
-                  return <h3>{el.description} <img src={`https://openweathermap.org/img/w/${el.icon}.png`} alt="" /></h3>
-                })}</h2>
-                <h2>Sunrise: {lokData.sys.sunrise}</h2>
-            </div>
+                <div className="wrapper">
+                    <div className="main">
+                            <div className="row">
+                                <div className="title-container">
+                                    <Text/>
+                                    {/*<GeolocationExample/>*/}
+                                </div>
+                                <div className="form-container">
+                                <Site loadWeather={this.loadWeather}/>
+                                <Weather temperature={temperature}
+                                  icon={icon}
+                                  humidity={humidity}
+                                  city={city}
+                                  country={country}
+                                  description={description}
+                                  pressure={pressure}
+                                  clouds={clouds}
+                                  error={error}/>
+                                </div>
+                            </div>
+                    </div>
+                </div>
             </div>
         );
     }
