@@ -4,7 +4,6 @@ import './App.css';
 import Text from '../SideText';
 import Site from '../Site';
 import Weather from '../Weather';
-// import GeolocationExample from '../GeoLocation'
 
 
 const API_KEY = '5b6e2ea387d6bc208427c65ed96cd662'
@@ -51,11 +50,9 @@ class LoadWeather extends Component{
             fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city},${country}&units=metric&appid=${API_KEY}`)
                 .then(response => {
                         if(response.ok){
-                            console.log(city, country)
                             return response.json();
 
                         } else {
-                            console.log(city, country)
                             console.log(response)
                         }
                     }
@@ -87,10 +84,55 @@ class LoadWeather extends Component{
                     }
             })
         }
+
+    loadGps=()=>{
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    console.log(position.coords.latitude)
+                    fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${position.coords.latitude}&lon=${position.coords.longitude}&units=metric&appid=${API_KEY}`)
+                        .then(response => {
+                                if(response.ok){
+                                    return response.json();
+
+                                } else {
+                                    console.log(response)
+                                }
+                            }
+                        )
+                        .then(data => {
+                            if (position) {
+                                this.setState({
+                                    city: data.name,
+                                    country: data.sys.country,
+                                    temperature: data.main.temp,
+                                    humidity: data.main.humidity,
+                                    pressure: data.main.pressure,
+                                    description: data.weather[0].description,
+                                    icon: ICONS[data.weather[0].icon],
+                                    clouds: data.clouds.all,
+                                    error: ''
+                                })
+                            } else {
+                                this.setState({
+                                    temperature: undefined,
+                                    city: undefined,
+                                    country: undefined,
+                                    humidity: undefined,
+                                    description: undefined,
+                                    pressure: undefined,
+                                    clouds: undefined,
+                                    error: 'Please enter the values.'
+                                })
+                            }
+                        })
+                },
+                (error) => console.log("error localization", error),
+                { enableHighAccuracy: true, timeout: 20000, maximumAge: 1000 },
+            );
+        }
+
     render() {
         const {city, country, temperature, humidity, description, icon, clouds, pressure, error} = this.state
-        // let time = new Date({lokData.dt} *1000);
-        // time.toGMTString()+"</br>"+time.toLocaleString()
         return (
             <div>
                 <div className="wrapper">
@@ -98,10 +140,9 @@ class LoadWeather extends Component{
                             <div className="row">
                                 <div className="title-container">
                                     <Text/>
-                                    {/*<GeolocationExample/>*/}
                                 </div>
                                 <div className="form-container">
-                                <Site loadWeather={this.loadWeather}/>
+                                <Site loadWeather={this.loadWeather} loadGps={this.loadGps}/>
                                 <Weather temperature={temperature}
                                   icon={icon}
                                   humidity={humidity}
@@ -119,6 +160,7 @@ class LoadWeather extends Component{
         );
     }
 }
+
 class App extends Component {
   render() {
     return (
