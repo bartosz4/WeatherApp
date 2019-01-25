@@ -1,10 +1,11 @@
 import React, { Component } from 'react';
 import './App.css';
 
+
 import Text from '../SideText';
 import Site from '../Site';
 import Weather from '../Weather';
-
+import MapWithinGreatM from '../map'
 
 const API_KEY = '5b6e2ea387d6bc208427c65ed96cd662'
 const ICONS = {
@@ -40,7 +41,11 @@ class LoadWeather extends Component{
             pressure: undefined,
             error: undefined,
             icon: undefined,
-            clouds: undefined
+            clouds: undefined,
+            lat: undefined,
+            lon: undefined,
+            mapState: false
+
         }
     }
     loadWeather = (event) => {
@@ -68,6 +73,8 @@ class LoadWeather extends Component{
                             description: data.weather[0].description,
                             icon: ICONS[data.weather[0].icon],
                             clouds: data.clouds.all,
+                            lon: data.coord.lon,
+                            lat: data.coord.lat,
                             error: ''
                         })
                     }else {
@@ -88,7 +95,6 @@ class LoadWeather extends Component{
     loadGps=()=>{
             navigator.geolocation.getCurrentPosition(
                 (position) => {
-                    console.log(position.coords.latitude)
                     fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${position.coords.latitude}&lon=${position.coords.longitude}&units=metric&appid=${API_KEY}`)
                         .then(response => {
                                 if(response.ok){
@@ -131,18 +137,36 @@ class LoadWeather extends Component{
             );
         }
 
+    loadMap=()=>{
+        if(!this.state.mapState) {
+            this.setState({
+                mapState: true
+            })
+        }
+
+    }
+
+    closeMap=()=>{
+        if(this.state.mapState){
+            this.setState({
+                mapState: false
+            })
+        }
+    }
+
     render() {
-        const {city, country, temperature, humidity, description, icon, clouds, pressure, error} = this.state
+        const {city, country, temperature, humidity, description, icon, clouds, pressure, error, mapState, lon, lat} = this.state
         return (
             <div>
                 <div className="wrapper">
-                    <div className="main">
+                    <MapWithinGreatM closeMap={this.closeMap} shouldRender={mapState} lon={lon} lat={lat}/>
+                    <div className={this.state.mapState ? 'hidden' : 'main'}>
                             <div className="row">
                                 <div className="title-container">
                                     <Text/>
                                 </div>
                                 <div className="form-container">
-                                <Site loadWeather={this.loadWeather} loadGps={this.loadGps}/>
+                                <Site loadWeather={this.loadWeather} loadGps={this.loadGps} loadMap={this.loadMap}/>
                                 <Weather temperature={temperature}
                                   icon={icon}
                                   humidity={humidity}
